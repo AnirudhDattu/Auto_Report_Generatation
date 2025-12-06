@@ -7,7 +7,20 @@ export const Letterhead: React.FC<{ logo?: string | null }> = ({ logo }) => {
         {/* Logo Area */}
         <div className="flex flex-col items-center justify-center w-24 h-24 relative bg-white">
           {logo ? (
-            <img src={logo} alt="Logo" className="max-w-full max-h-full object-contain" />
+            <img 
+               src={logo} 
+               alt="Logo" 
+               className="max-w-full max-h-full object-contain" 
+               onError={(e) => {
+                  // Fallback if the default image path is broken
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement?.classList.add('border-2', 'border-dashed', 'border-gray-300');
+                  const span = document.createElement('span');
+                  span.innerText = "No Logo";
+                  span.className = "text-[10px] text-gray-400";
+                  e.currentTarget.parentElement?.appendChild(span);
+               }}
+            />
           ) : (
             <div className="w-full h-full border-2 border-dashed border-gray-300 flex items-center justify-center text-[10px] text-gray-400 text-center">
               No Logo Uploaded

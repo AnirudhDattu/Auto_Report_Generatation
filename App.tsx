@@ -84,7 +84,7 @@ const App: React.FC = () => {
             </div>
             
             <div className="text-gray-500 text-sm pb-8">
-               Preview Mode • A4 Layout (210mm x 297mm) • Arial Font
+               Preview Mode • A4 Layout (210mm x 297mm) • Customizable Fonts
             </div>
          </div>
       </div>

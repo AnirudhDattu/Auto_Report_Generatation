@@ -1,11 +1,20 @@
 import React, { useRef } from 'react';
-import { ReportData, RecommendationRow } from '../types';
-import { ChevronDown, ChevronUp, Plus, Trash2, Upload, X } from 'lucide-react';
+import { ReportData, RecommendationRow, FontConfig } from '../types';
+import { ChevronDown, ChevronUp, Plus, Trash2, Upload, X, Type } from 'lucide-react';
 
 interface EditorProps {
   data: ReportData;
   onChange: (newData: ReportData) => void;
 }
+
+const FONT_OPTIONS = [
+  "Arial",
+  "Roboto",
+  "Open Sans",
+  "Lato",
+  "Montserrat",
+  "Playfair Display"
+];
 
 export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
   const handleChange = (field: keyof ReportData, value: any) => {
@@ -20,6 +29,30 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
         [child]: value
       }
     });
+  };
+
+  const handleFontChange = (key: keyof FontConfig, font: string) => {
+    // If global is changed, we can optionally reset others or just set global
+    // Here we treat global as a base, but for specific controls we set individual fields
+    if (key === 'global') {
+       onChange({
+         ...data,
+         fonts: {
+           global: font,
+           title: font,
+           headers: font,
+           body: font
+         }
+       });
+    } else {
+       onChange({
+         ...data,
+         fonts: {
+           ...data.fonts,
+           [key]: font
+         }
+       });
+    }
   };
 
   const updateRecommendation = (index: number, field: keyof RecommendationRow, value: string) => {
@@ -49,6 +82,23 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
     handleChange('recommendations', newRecs);
   };
 
+  // Remarks handling
+  const addRemark = () => {
+    handleChange('remarks', [...data.remarks, "New remark point"]);
+  };
+
+  const updateRemark = (index: number, val: string) => {
+    const newRemarks = [...data.remarks];
+    newRemarks[index] = val;
+    handleChange('remarks', newRemarks);
+  };
+
+  const removeRemark = (index: number) => {
+    const newRemarks = [...data.remarks];
+    newRemarks.splice(index, 1);
+    handleChange('remarks', newRemarks);
+  };
+
   return (
     <div className="flex flex-col gap-6 p-6 text-sm text-gray-300">
       
@@ -64,6 +114,7 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
               onChange={(v) => handleChange('logoImage', v)} 
               placeholder="Upload Logo"
            />
+           <p className="text-[10px] text-gray-600 mt-1">Default: /logo.png (if present in repo)</p>
         </div>
 
         <div className="mt-4">
@@ -73,7 +124,36 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
               onChange={(v) => handleChange('signatureImage', v)} 
               placeholder="Upload Signature"
            />
+           <p className="text-[10px] text-gray-600 mt-1">Default: /signature.png (if present in repo)</p>
         </div>
+      </Section>
+
+      {/* Typography */}
+      <Section title="Typography">
+         <div className="space-y-3">
+            <FontSelector 
+               label="Global Font (Applies to all)" 
+               value={data.fonts.global} 
+               onChange={(v) => handleFontChange('global', v)} 
+            />
+            <div className="border-t border-gray-800 my-2"></div>
+            <p className="text-xs text-gray-500 font-bold uppercase">Section Overrides</p>
+            <FontSelector 
+               label="Main Title" 
+               value={data.fonts.title} 
+               onChange={(v) => handleFontChange('title', v)} 
+            />
+            <FontSelector 
+               label="Section Headers" 
+               value={data.fonts.headers} 
+               onChange={(v) => handleFontChange('headers', v)} 
+            />
+            <FontSelector 
+               label="Body Text" 
+               value={data.fonts.body} 
+               onChange={(v) => handleFontChange('body', v)} 
+            />
+         </div>
       </Section>
 
       {/* General Information */}
@@ -179,6 +259,29 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
         <TextArea label="Note Content" value={data.note} onChange={(v) => handleChange('note', v)} rows={4} />
       </Section>
 
+      <Section title="Remarks">
+         <div className="space-y-3">
+            {data.remarks.map((rem, idx) => (
+               <div key={idx} className="flex gap-2 items-start">
+                  <span className="text-gray-500 pt-2">{idx + 1}.</span>
+                  <TextArea label="" value={rem} onChange={(v) => updateRemark(idx, v)} rows={2} />
+                  <button 
+                    onClick={() => removeRemark(idx)}
+                    className="mt-2 text-gray-500 hover:text-red-400"
+                  >
+                    <X size={16} />
+                  </button>
+               </div>
+            ))}
+            <button 
+               onClick={addRemark}
+               className="text-xs flex items-center gap-1 text-blue-400 hover:text-blue-300 mt-2"
+            >
+               <Plus size={14} /> Add Remark Point
+            </button>
+         </div>
+      </Section>
+
     </div>
   );
 };
@@ -201,7 +304,7 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 
 const Input: React.FC<{ label: string; value: string; onChange: (v: string) => void }> = ({ label, value, onChange }) => (
   <div className="w-full">
-    <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
+    {label && <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>}
     <input 
       type="text" 
       value={value} 
@@ -213,7 +316,7 @@ const Input: React.FC<{ label: string; value: string; onChange: (v: string) => v
 
 const TextArea: React.FC<{ label: string; value: string; onChange: (v: string) => void; rows?: number }> = ({ label, value, onChange, rows = 3 }) => (
   <div className="w-full">
-    <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
+    {label && <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>}
     <textarea 
       rows={rows}
       value={value} 
@@ -221,6 +324,23 @@ const TextArea: React.FC<{ label: string; value: string; onChange: (v: string) =
       className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors resize-y"
     />
   </div>
+);
+
+const FontSelector: React.FC<{ label: string; value: string; onChange: (v: string) => void }> = ({ label, value, onChange }) => (
+   <div className="w-full">
+      <label className="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
+         <Type size={12} /> {label}
+      </label>
+      <select 
+         value={value} 
+         onChange={(e) => onChange(e.target.value)}
+         className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
+      >
+         {FONT_OPTIONS.map(font => (
+            <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
+         ))}
+      </select>
+   </div>
 );
 
 const ImageUploader: React.FC<{ value: string | null; onChange: (v: string | null) => void; placeholder: string }> = ({ value, onChange, placeholder }) => {

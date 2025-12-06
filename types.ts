@@ -10,12 +10,22 @@ export interface RecommendationRow {
   rowColor: string; // e.g. "bg-green-600"
 }
 
+export interface FontConfig {
+  global: string;
+  title: string;
+  headers: string;
+  body: string;
+}
+
 export interface ReportData {
   // Meta
   fileName: string;
   surveyorName: string;
-  logoImage: string | null; // Base64 string
-  signatureImage: string | null; // Base64 string
+  logoImage: string | null; // Base64 string or Path
+  signatureImage: string | null; // Base64 string or Path
+  
+  // Style
+  fonts: FontConfig;
 
   // Content
   sNo: string;
@@ -39,13 +49,22 @@ export interface ReportData {
   };
   recommendations: RecommendationRow[];
   note: string;
+  remarks: string[]; // List of strings for bullet points
 }
 
 export const INITIAL_DATA: ReportData = {
   fileName: "Ground_Water_Survey_Report",
   surveyorName: "GANESH RAJ",
-  logoImage: null,
-  signatureImage: null,
+  // Default paths - user can place logo.png and signature.png in their public folder
+  logoImage: "/logo.png", 
+  signatureImage: "/signature.png",
+
+  fonts: {
+    global: "Arial",
+    title: "Arial",
+    headers: "Arial",
+    body: "Arial"
+  },
 
   sNo: "172",
   date: "09–Apr–2024",
@@ -90,5 +109,9 @@ export const INITIAL_DATA: ReportData = {
       rowColor: "bg-cyan-400"
     }
   ],
-  note: "NOTE : The above area is a complex sheet rock area. The is in a very high-risk zone as per groundwater availability. Hence the success rate would be around 80% to 90% probability only. Clients are advised to think twice before drilling."
+  note: "NOTE : The above area is a complex sheet rock area. The is in a very high-risk zone as per groundwater availability. Hence the success rate would be around 80% to 90% probability only. Clients are advised to think twice before drilling.",
+  remarks: [
+    "At the end of the survey all the POINTS are well marked, numbered, and informed YOU for better identification.",
+    "If required for any practical reasons, the drilling can be done within a ONE feet radius from the marked points."
+  ]
 };
