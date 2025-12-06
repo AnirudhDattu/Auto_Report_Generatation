@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { Page1, Page2 } from './components/ReportContent';
 import { Editor } from './components/Editor';
 import { generatePdf } from './services/pdfService';
@@ -11,6 +12,30 @@ const App: React.FC = () => {
   const [data, setData] = useState<ReportData>(INITIAL_DATA);
   const [isExporting, setIsExporting] = useState(false);
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
+  const [previewScale, setPreviewScale] = useState(1);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+
+  // Calculate optimum scale for preview based on screen width
+  useEffect(() => {
+    const calculateScale = () => {
+      if (!previewContainerRef.current) return;
+      
+      const containerWidth = previewContainerRef.current.clientWidth;
+      // A4 width in px at 96dpi is approx 794px. Adding some padding (32px on each side = 64px)
+      const targetWidth = 794; 
+      const padding = 32; 
+      
+      let scale = (containerWidth - padding) / targetWidth;
+      // Cap scale at 1.0 for large screens, min 0.3 for very small screens
+      scale = Math.min(Math.max(scale, 0.35), 1.0);
+      
+      setPreviewScale(scale);
+    };
+
+    calculateScale();
+    window.addEventListener('resize', calculateScale);
+    return () => window.removeEventListener('resize', calculateScale);
+  }, [activeTab]); // Recalc when tab changes too
 
   const handleExport = async (type: 'pdf' | 'docx') => {
     setIsExporting(true);
@@ -50,6 +75,9 @@ const App: React.FC = () => {
       setIsExporting(false);
     }
   };
+
+  // Height calculation to prevent whitespace: A4 Height (1123px) * number of pages * scale + gap
+  const contentHeight = (1123 * 2 + 40) * previewScale;
 
   return (
     // Use h-[100dvh] for mobile browsers to account for address bars
@@ -110,13 +138,27 @@ const App: React.FC = () => {
       </div>
 
       {/* Preview Panel */}
-      <div className={`${activeTab === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 bg-gray-900 flex-col items-center relative h-full overflow-hidden`}>
+      <div 
+        ref={previewContainerRef}
+        className={`${activeTab === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 bg-gray-900 flex-col items-center relative h-full overflow-hidden`}
+      >
          
          {/* Scrollable Preview Area */}
          <div className="flex-1 w-full overflow-y-auto p-4 md:p-8 flex flex-col items-center min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
-            <div className="w-full max-w-[1000px] flex flex-col gap-8 items-center pb-24 md:pb-0">
-               {/* Scale wrapper to fit A4 on screens. This scale does NOT affect PDF generation now. */}
-               <div className="origin-top transform scale-[0.45] sm:scale-[0.6] md:scale-[0.65] lg:scale-[0.8] xl:scale-[0.9] 2xl:scale-100 flex flex-col gap-8 transition-transform duration-300">
+            {/* Height wrapper prevents blank scrolling area by matching scaled height */}
+            <div 
+               style={{ 
+                  width: '794px', // Fixed A4 pixel width
+                  height: `${contentHeight}px`,
+                  position: 'relative',
+                  marginBottom: '100px' // Extra space for FABs
+               }}
+            >
+               {/* Scaled content */}
+               <div 
+                  className="origin-top flex flex-col gap-10 absolute top-0 left-0"
+                  style={{ transform: `scale(${previewScale})` }}
+               >
                   <div className="shadow-2xl ring-1 ring-white/10 bg-white">
                     <Page1 data={data} />
                   </div>
@@ -124,10 +166,10 @@ const App: React.FC = () => {
                     <Page2 data={data} />
                   </div>
                </div>
+            </div>
                
-               <div className="text-gray-500 text-xs md:text-sm pb-8 text-center opacity-70">
-                  Preview Mode • A4 Layout (210mm x 297mm) • Customizable Fonts
-               </div>
+            <div className="text-gray-500 text-xs md:text-sm pb-8 text-center opacity-70 mt-8">
+               Preview Mode • A4 Layout (210mm x 297mm) • Scale: {Math.round(previewScale * 100)}%
             </div>
          </div>
 

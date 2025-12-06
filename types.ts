@@ -22,8 +22,8 @@ export interface ReportData {
   // Meta
   fileName: string;
   surveyorName: string;
-  logoImage: string; // Path (static)
-  signatureImage: string; // Path (static)
+  logoImage: string; // Base64 or Path
+  signatureImage: string; // Base64 or Path
   
   // Style
   fonts: FontConfig;
@@ -56,9 +56,9 @@ export interface ReportData {
 export const INITIAL_DATA: ReportData = {
   fileName: "Ground_Water_Survey_Report",
   surveyorName: "GANESH RAJ",
-  // Default paths - using relative paths to ensure they load from the same directory
-  logoImage: "./logo.png", 
-  signatureImage: "./signature.png",
+  // Default to empty to allow user upload, or you can put a long Base64 string here if you have one.
+  logoImage: "", 
+  signatureImage: "",
 
   fonts: {
     global: "Arial",
