@@ -14,28 +14,43 @@ const App: React.FC = () => {
   const [previewScale, setPreviewScale] = useState(1);
   const previewContainerRef = useRef<HTMLDivElement>(null);
 
-  // Calculate optimum scale for preview based on screen width
-  useEffect(() => {
-    const calculateScale = () => {
-      if (!previewContainerRef.current) return;
-      
-      const containerWidth = previewContainerRef.current.clientWidth;
-      // A4 width in px at 96dpi is approx 794px. Adding some padding.
-      // On mobile, we want less padding to maximize space.
-      const targetWidth = 794; 
-      const padding = containerWidth < 768 ? 20 : 64; 
-      
-      let scale = (containerWidth - padding) / targetWidth;
-      // Cap scale at 1.0 for large screens, min 0.3 for very small screens
-      scale = Math.min(Math.max(scale, 0.3), 1.0);
-      
-      setPreviewScale(scale);
-    };
+  const calculateScale = () => {
+    if (!previewContainerRef.current) return;
+    
+    const containerWidth = previewContainerRef.current.clientWidth;
+    // A4 width in px at 96dpi is approx 794px.
+    const targetWidth = 794; 
+    
+    // More aggressive padding calculation to prevent cutoff
+    const padding = containerWidth < 768 ? 32 : 80; 
+    
+    let scale = (containerWidth - padding) / targetWidth;
+    // Cap scale at 1.0 for large screens, allow going smaller (0.2) for very small screens
+    scale = Math.min(Math.max(scale, 0.2), 1.0);
+    
+    setPreviewScale(scale);
+  };
 
-    calculateScale();
+  // Use ResizeObserver for robust scaling updates
+  useEffect(() => {
+    const container = previewContainerRef.current;
+    if (!container) return;
+
+    calculateScale(); // Initial calcluation
+
+    const observer = new ResizeObserver(() => {
+      calculateScale();
+    });
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [activeTab]); // Re-bind if tab changes (though ref persists usually)
+
+  // Listen to window resize as fallback
+  useEffect(() => {
     window.addEventListener('resize', calculateScale);
     return () => window.removeEventListener('resize', calculateScale);
-  }, [activeTab]); // Recalc when tab changes too
+  }, []);
 
   const handleExport = async (type: 'pdf' | 'docx') => {
     setIsExporting(true);
@@ -57,28 +72,29 @@ const App: React.FC = () => {
       const filename = `${data.fileName || 'report'}.${extension}`;
       const file = new File([blob], filename, { type: mimeType });
 
-      // Native Share (Mobile)
-      if (navigator.share && navigator.canShare({ files: [file] })) {
+      // Check if mobile device
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+      // Prefer Native Share on Mobile only
+      if (isMobile && navigator.share && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
           title: 'Survey Report',
           text: 'Here is the generated survey report.',
         });
       } else {
-        // Fallback to Download (Desktop)
+        // Force Download on Desktop
         saveAs(blob, filename);
       }
     } catch (e) {
-      console.error(e);
-      alert("Error generating or sharing file");
+      console.error("Export error:", e);
+      alert("Error generating file. Please check console for details.");
     } finally {
       setIsExporting(false);
     }
   };
 
   // A4 Page height is approx 1123px.
-  // We use exactly the scaled height to avoid blank scroll.
-  // Total height = (Page Height * NumPages + Gap * (NumPages-1)) * Scale
   const PAGE_HEIGHT = 1123;
   const GAP = 40;
   const contentHeight = ((PAGE_HEIGHT * 2) + GAP) * previewScale;
@@ -103,8 +119,8 @@ const App: React.FC = () => {
         </button>
       </div>
 
-      {/* Editor Panel */}
-      <div className={`${activeTab === 'editor' ? 'flex' : 'hidden'} md:flex w-full md:w-[450px] flex-shrink-0 flex-col border-r border-gray-800 bg-[#0B1120] h-full overflow-hidden`}>
+      {/* Editor Panel - Responsive Width */}
+      <div className={`${activeTab === 'editor' ? 'flex' : 'hidden'} md:flex w-full md:w-[380px] lg:w-[450px] flex-shrink-0 flex-col border-r border-gray-800 bg-[#0B1120] h-full overflow-hidden z-20`}>
         <div className="p-4 border-b border-gray-800 flex items-center gap-3 flex-shrink-0">
           <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/50">
              <PanelsTopLeft size={18} />
@@ -144,7 +160,7 @@ const App: React.FC = () => {
       {/* Preview Panel */}
       <div 
         ref={previewContainerRef}
-        className={`${activeTab === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 bg-gray-900 flex-col items-center relative h-full overflow-hidden`}
+        className={`${activeTab === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 bg-gray-900 flex-col items-center relative h-full overflow-hidden z-10`}
       >
          
          {/* Scrollable Preview Area */}
@@ -155,6 +171,7 @@ const App: React.FC = () => {
                   width: `${794 * previewScale}px`, 
                   height: `${contentHeight}px`,
                   position: 'relative',
+                  flexShrink: 0,
                   // Add a small bottom margin for mobile FABs so content isn't covered
                   marginBottom: '80px' 
                }}
