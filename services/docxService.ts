@@ -1,20 +1,21 @@
+
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, ImageRun } from "docx";
 import { ReportData } from "../types";
 
 // Helper to get image data from either Base64 or a URL path
-const getImageData = async (src: string | null): Promise<{ data: Uint8Array; type: "png" | "jpeg" | "gif" | "bmp" } | null> => {
+const getImageData = async (src: string | null): Promise<{ data: Uint8Array; type: "png" | "jpg" | "gif" | "bmp" } | null> => {
   if (!src) return null;
 
   try {
     let data: Uint8Array;
-    let type: "png" | "jpeg" | "gif" | "bmp" = "png";
+    let type: "png" | "jpg" | "gif" | "bmp" = "png";
 
     // If it's a data URL (Base64)
     if (src.startsWith('data:')) {
       const arr = src.split(',');
       const mime = arr[0].match(/:(.*?);/)?.[1] || "";
       
-      if (mime.includes('jpeg') || mime.includes('jpg')) type = "jpeg";
+      if (mime.includes('jpeg') || mime.includes('jpg')) type = "jpg";
       else if (mime.includes('png')) type = "png";
       else if (mime.includes('gif')) type = "gif";
       else if (mime.includes('bmp')) type = "bmp";
@@ -30,7 +31,7 @@ const getImageData = async (src: string | null): Promise<{ data: Uint8Array; typ
     // If it's a file path (e.g., "/logo.png")
     else {
       const lower = src.toLowerCase();
-      if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) type = "jpeg";
+      if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) type = "jpg";
       else if (lower.endsWith('.gif')) type = "gif";
       else if (lower.endsWith('.bmp')) type = "bmp";
 
@@ -58,9 +59,9 @@ export const generateDocx = async (data: ReportData): Promise<Blob> => {
   const createNormalText = (text: string) => new TextRun({ text, font: bodyFont, size });
   const createUnderlineBold = (text: string) => new TextRun({ text, font: headerFont, size, bold: true, underline: { type: "single" } });
 
-  // Load images
-  const logoImg = await getImageData(data.logoImage);
-  const signatureImg = await getImageData(data.signatureImage);
+  // Load static images (assuming they exist in public root as requested by user)
+  const logoImg = await getImageData("/logo.png");
+  const signatureImg = await getImageData("/signature.png");
 
   // Table Cell Helper with margins
   const createCell = (text: string, fill: string, widthPercent: number, bold: boolean = false) => {
@@ -311,7 +312,7 @@ export const generateDocx = async (data: ReportData): Promise<Blob> => {
                   ],
               })
           ] : [
-             new Paragraph({ children: [new TextRun({text: "(Signature Placeholder)", size: 16, color: "888888"})] })
+             new Paragraph({ children: [new TextRun({text: "(Signature)", size: 16, color: "000000"})] })
           ]),
 
           new Paragraph({

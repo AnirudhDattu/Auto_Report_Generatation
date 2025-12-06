@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { ReportData } from '../types';
 import { Letterhead, Footer } from './Letterhead';
+import { Signature } from './Signature';
 
 interface PageProps {
   data: ReportData;
@@ -13,7 +15,7 @@ export const Page1: React.FC<PageProps> = ({ data }) => {
 
   return (
     <div id="report-page-1" className="print-page relative text-sm leading-relaxed text-black" style={bodyStyle}>
-      <Letterhead logo={data.logoImage} />
+      <Letterhead />
 
       <div className="flex justify-between font-bold mb-8 mt-6" style={headerStyle}>
         <span>S.No.{data.sNo}</span>
@@ -101,7 +103,7 @@ export const Page2: React.FC<PageProps> = ({ data }) => {
 
   return (
     <div id="report-page-2" className="print-page relative text-sm leading-relaxed text-black" style={bodyStyle}>
-      <Letterhead logo={data.logoImage} />
+      <Letterhead />
 
       <h3 className="underline font-bold text-lg mb-4" style={headerStyle}>Recommendations</h3>
       
@@ -169,7 +171,6 @@ export const Page2: React.FC<PageProps> = ({ data }) => {
         <ol className="list-decimal ml-10 space-y-4">
           {data.remarks.map((rem, idx) => (
              <li key={idx}>
-               {/* Bold 'YOU' and 'ONE feet radius' if they exist, simplistic approach: */}
                <span dangerouslySetInnerHTML={{ __html: rem.replace(/(YOU)/g, '<b>$1</b>').replace(/(ONE feet radius)/g, '<b>$1</b>') }} />
              </li>
           ))}
@@ -179,13 +180,7 @@ export const Page2: React.FC<PageProps> = ({ data }) => {
       <div className="mb-8">
         <p className="font-bold mb-8">For AQUA GEO SERVICES,</p>
         <div className="relative h-12 w-48 mb-2">
-             {data.signatureImage ? (
-                <img src={data.signatureImage} alt="Signature" className="h-full object-contain object-left" />
-             ) : (
-                <div className="h-full border border-dashed border-gray-300 flex items-center justify-center text-xs text-gray-400">
-                   No Signature Uploaded
-                </div>
-             )}
+             <Signature />
         </div>
         <p>(D.V.S.P. Gupta)</p>
       </div>

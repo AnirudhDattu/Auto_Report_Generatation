@@ -1,7 +1,7 @@
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { ReportData, RecommendationRow, FontConfig } from '../types';
-import { ChevronDown, ChevronUp, Plus, Trash2, X, Type, Upload } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Trash2, X, Type } from 'lucide-react';
 
 interface EditorProps {
   data: ReportData;
@@ -51,17 +51,6 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
            [key]: font
          }
        });
-    }
-  };
-
-  const handleImageUpload = (field: 'logoImage' | 'signatureImage', e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        handleChange(field, reader.result as string);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -115,21 +104,6 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
       <Section title="Report Settings">
         <Input label="Output Filename" value={data.fileName} onChange={(v) => handleChange('fileName', v)} />
         <Input label="Surveyor Name (Footer)" value={data.surveyorName} onChange={(v) => handleChange('surveyorName', v)} />
-        
-        <div className="mt-4 space-y-4">
-          <ImageUploader 
-            label="Logo Image" 
-            preview={data.logoImage} 
-            onChange={(e) => handleImageUpload('logoImage', e)}
-            onClear={() => handleChange('logoImage', '')}
-          />
-          <ImageUploader 
-            label="Signature Image" 
-            preview={data.signatureImage} 
-            onChange={(e) => handleImageUpload('signatureImage', e)}
-             onClear={() => handleChange('signatureImage', '')}
-          />
-        </div>
       </Section>
 
       {/* Typography */}
@@ -329,51 +303,6 @@ const TextArea: React.FC<{ label: string; value: string; onChange: (v: string) =
     />
   </div>
 );
-
-const ImageUploader: React.FC<{ label: string; preview: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; onClear: () => void }> = ({ label, preview, onChange, onClear }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  return (
-    <div className="w-full">
-      <label className="block text-xs font-medium text-gray-500 mb-2">{label}</label>
-      <div className="flex items-start gap-4">
-        <div className="w-16 h-16 bg-gray-900 border border-gray-700 rounded flex items-center justify-center overflow-hidden shrink-0">
-          {preview ? (
-            <img src={preview} alt="Preview" className="w-full h-full object-contain" />
-          ) : (
-            <span className="text-[10px] text-gray-600">None</span>
-          )}
-        </div>
-        <div className="flex flex-col gap-2 flex-1">
-          <input 
-            type="file" 
-            ref={fileInputRef}
-            onChange={onChange} 
-            accept="image/*"
-            className="hidden" 
-          />
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center justify-center gap-2 bg-gray-800 border border-gray-700 hover:bg-gray-700 text-white py-1.5 px-3 rounded text-xs transition-colors"
-          >
-            <Upload size={14} /> Upload Image
-          </button>
-          {preview && (
-            <button 
-              onClick={() => {
-                onClear();
-                if (fileInputRef.current) fileInputRef.current.value = '';
-              }}
-              className="text-xs text-red-400 hover:text-red-300 text-left"
-            >
-              Remove
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const FontSelector: React.FC<{ label: string; value: string; onChange: (v: string) => void }> = ({ label, value, onChange }) => (
    <div className="w-full">

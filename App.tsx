@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Page1, Page2 } from './components/ReportContent';
 import { Editor } from './components/Editor';
@@ -21,13 +20,14 @@ const App: React.FC = () => {
       if (!previewContainerRef.current) return;
       
       const containerWidth = previewContainerRef.current.clientWidth;
-      // A4 width in px at 96dpi is approx 794px. Adding some padding (32px on each side = 64px)
+      // A4 width in px at 96dpi is approx 794px. Adding some padding.
+      // On mobile, we want less padding to maximize space.
       const targetWidth = 794; 
-      const padding = 32; 
+      const padding = containerWidth < 768 ? 20 : 64; 
       
       let scale = (containerWidth - padding) / targetWidth;
       // Cap scale at 1.0 for large screens, min 0.3 for very small screens
-      scale = Math.min(Math.max(scale, 0.35), 1.0);
+      scale = Math.min(Math.max(scale, 0.3), 1.0);
       
       setPreviewScale(scale);
     };
@@ -76,8 +76,12 @@ const App: React.FC = () => {
     }
   };
 
-  // Height calculation to prevent whitespace: A4 Height (1123px) * number of pages * scale + gap
-  const contentHeight = (1123 * 2 + 40) * previewScale;
+  // A4 Page height is approx 1123px.
+  // We use exactly the scaled height to avoid blank scroll.
+  // Total height = (Page Height * NumPages + Gap * (NumPages-1)) * Scale
+  const PAGE_HEIGHT = 1123;
+  const GAP = 40;
+  const contentHeight = ((PAGE_HEIGHT * 2) + GAP) * previewScale;
 
   return (
     // Use h-[100dvh] for mobile browsers to account for address bars
@@ -145,18 +149,19 @@ const App: React.FC = () => {
          
          {/* Scrollable Preview Area */}
          <div className="flex-1 w-full overflow-y-auto p-4 md:p-8 flex flex-col items-center min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
-            {/* Height wrapper prevents blank scrolling area by matching scaled height */}
+            {/* Height wrapper matches scaled content exactly to prevent blank scroll */}
             <div 
                style={{ 
-                  width: '794px', // Fixed A4 pixel width
+                  width: `${794 * previewScale}px`, 
                   height: `${contentHeight}px`,
                   position: 'relative',
-                  marginBottom: '100px' // Extra space for FABs
+                  // Add a small bottom margin for mobile FABs so content isn't covered
+                  marginBottom: '80px' 
                }}
             >
                {/* Scaled content */}
                <div 
-                  className="origin-top flex flex-col gap-10 absolute top-0 left-0"
+                  className="origin-top-left flex flex-col gap-[40px] absolute top-0 left-0"
                   style={{ transform: `scale(${previewScale})` }}
                >
                   <div className="shadow-2xl ring-1 ring-white/10 bg-white">
@@ -166,10 +171,6 @@ const App: React.FC = () => {
                     <Page2 data={data} />
                   </div>
                </div>
-            </div>
-               
-            <div className="text-gray-500 text-xs md:text-sm pb-8 text-center opacity-70 mt-8">
-               Preview Mode • A4 Layout (210mm x 297mm) • Scale: {Math.round(previewScale * 100)}%
             </div>
          </div>
 

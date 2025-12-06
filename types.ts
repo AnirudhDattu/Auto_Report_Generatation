@@ -1,4 +1,6 @@
 
+
+
 export interface RecommendationRow {
   id: string;
   priorityLabel: string; // e.g. "1st priority point"
@@ -22,8 +24,6 @@ export interface ReportData {
   // Meta
   fileName: string;
   surveyorName: string;
-  logoImage: string; // Base64 or Path
-  signatureImage: string; // Base64 or Path
   
   // Style
   fonts: FontConfig;
@@ -56,9 +56,6 @@ export interface ReportData {
 export const INITIAL_DATA: ReportData = {
   fileName: "Ground_Water_Survey_Report",
   surveyorName: "GANESH RAJ",
-  // Default to empty to allow user upload, or you can put a long Base64 string here if you have one.
-  logoImage: "", 
-  signatureImage: "",
 
   fonts: {
     global: "Arial",
