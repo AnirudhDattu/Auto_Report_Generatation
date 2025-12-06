@@ -1,0 +1,5 @@
+{
+  "name": "Aqua Geo Survey Report Generator",
+  "description": "A digital reproduction of the Aqua Geo Services survey report with PDF and DOCX export capabilities.",
+  "requestFramePermissions": []
+}
