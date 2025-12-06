@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Aqua Geo Services Report Builder</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -16,11 +16,12 @@
         background-color: #111827; 
         color: #f3f4f6;
         margin: 0;
+        /* Removed overscroll-behavior-y: none to fix stuck scrolling */
+        touch-action: manipulation;
       }
 
       /* Report styles */
       .print-font {
-        /* Default fallback */
         font-family: 'Arial', sans-serif;
       }
       
@@ -50,6 +51,13 @@
       }
       ::-webkit-scrollbar-thumb:hover {
         background: #6b7280; 
+      }
+
+      .custom-scrollbar::-webkit-scrollbar {
+         width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+         background: #374151; 
       }
     </style>
   <script type="importmap">

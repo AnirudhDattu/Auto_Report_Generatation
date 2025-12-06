@@ -1,3 +1,4 @@
+
 export interface RecommendationRow {
   id: string;
   priorityLabel: string; // e.g. "1st priority point"
@@ -21,8 +22,8 @@ export interface ReportData {
   // Meta
   fileName: string;
   surveyorName: string;
-  logoImage: string | null; // Base64 string or Path
-  signatureImage: string | null; // Base64 string or Path
+  logoImage: string; // Path (static)
+  signatureImage: string; // Path (static)
   
   // Style
   fonts: FontConfig;
@@ -55,9 +56,9 @@ export interface ReportData {
 export const INITIAL_DATA: ReportData = {
   fileName: "Ground_Water_Survey_Report",
   surveyorName: "GANESH RAJ",
-  // Default paths - user can place logo.png and signature.png in their public folder
-  logoImage: "/logo.png", 
-  signatureImage: "/signature.png",
+  // Default paths - using relative paths to ensure they load from the same directory
+  logoImage: "./logo.png", 
+  signatureImage: "./signature.png",
 
   fonts: {
     global: "Arial",

@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { ReportData, RecommendationRow, FontConfig } from '../types';
-import { ChevronDown, ChevronUp, Plus, Trash2, Upload, X, Type } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Trash2, X, Type } from 'lucide-react';
 
 interface EditorProps {
   data: ReportData;
@@ -32,8 +32,6 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
   };
 
   const handleFontChange = (key: keyof FontConfig, font: string) => {
-    // If global is changed, we can optionally reset others or just set global
-    // Here we treat global as a base, but for specific controls we set individual fields
     if (key === 'global') {
        onChange({
          ...data,
@@ -82,7 +80,6 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
     handleChange('recommendations', newRecs);
   };
 
-  // Remarks handling
   const addRemark = () => {
     handleChange('remarks', [...data.remarks, "New remark point"]);
   };
@@ -106,25 +103,8 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
       <Section title="Report Settings">
         <Input label="Output Filename" value={data.fileName} onChange={(v) => handleChange('fileName', v)} />
         <Input label="Surveyor Name (Footer)" value={data.surveyorName} onChange={(v) => handleChange('surveyorName', v)} />
-        
-        <div className="mt-4">
-           <label className="block text-xs font-medium text-gray-500 mb-2">Header Logo</label>
-           <ImageUploader 
-              value={data.logoImage} 
-              onChange={(v) => handleChange('logoImage', v)} 
-              placeholder="Upload Logo"
-           />
-           <p className="text-[10px] text-gray-600 mt-1">Default: /logo.png (if present in repo)</p>
-        </div>
-
-        <div className="mt-4">
-           <label className="block text-xs font-medium text-gray-500 mb-2">Signature Image</label>
-           <ImageUploader 
-              value={data.signatureImage} 
-              onChange={(v) => handleChange('signatureImage', v)} 
-              placeholder="Upload Signature"
-           />
-           <p className="text-[10px] text-gray-600 mt-1">Default: /signature.png (if present in repo)</p>
+        <div className="mt-2 p-2 bg-gray-800 rounded text-xs text-gray-500 border border-gray-700">
+          <p>Logo & Signature are loaded from project defaults.</p>
         </div>
       </Section>
 
@@ -342,51 +322,3 @@ const FontSelector: React.FC<{ label: string; value: string; onChange: (v: strin
       </select>
    </div>
 );
-
-const ImageUploader: React.FC<{ value: string | null; onChange: (v: string | null) => void; placeholder: string }> = ({ value, onChange, placeholder }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        onChange(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  return (
-    <div className="w-full">
-      {value ? (
-        <div className="relative group">
-          <div className="h-20 w-full bg-white rounded border border-gray-700 flex items-center justify-center overflow-hidden">
-             <img src={value} alt="Preview" className="max-h-full max-w-full object-contain" />
-          </div>
-          <button 
-            onClick={() => onChange(null)}
-            className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <X size={12} />
-          </button>
-        </div>
-      ) : (
-        <button 
-          onClick={() => fileInputRef.current?.click()}
-          className="w-full h-20 border border-dashed border-gray-600 rounded flex flex-col items-center justify-center text-gray-500 hover:text-white hover:border-gray-400 transition-all gap-1"
-        >
-          <Upload size={16} />
-          <span className="text-xs">{placeholder}</span>
-        </button>
-      )}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleFileChange} 
-        accept="image/*" 
-        className="hidden" 
-      />
-    </div>
-  );
-};

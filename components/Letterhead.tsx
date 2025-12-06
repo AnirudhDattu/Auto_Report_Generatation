@@ -12,18 +12,12 @@ export const Letterhead: React.FC<{ logo?: string | null }> = ({ logo }) => {
                alt="Logo" 
                className="max-w-full max-h-full object-contain" 
                onError={(e) => {
-                  // Fallback if the default image path is broken
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement?.classList.add('border-2', 'border-dashed', 'border-gray-300');
-                  const span = document.createElement('span');
-                  span.innerText = "No Logo";
-                  span.className = "text-[10px] text-gray-400";
-                  e.currentTarget.parentElement?.appendChild(span);
+                  e.currentTarget.style.opacity = '0.5'; // Visual cue if broken, but don't completely hide to debug
                }}
             />
           ) : (
             <div className="w-full h-full border-2 border-dashed border-gray-300 flex items-center justify-center text-[10px] text-gray-400 text-center">
-              No Logo Uploaded
+              No Logo
             </div>
           )}
         </div>

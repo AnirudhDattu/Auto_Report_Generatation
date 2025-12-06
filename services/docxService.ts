@@ -1,5 +1,4 @@
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, ImageRun } from "docx";
-import saveAs from "file-saver";
 import { ReportData } from "../types";
 
 // Helper to get image data from either Base64 or a URL path
@@ -47,7 +46,7 @@ const getImageData = async (src: string | null): Promise<{ data: Uint8Array; typ
   }
 };
 
-export const generateDocx = async (data: ReportData) => {
+export const generateDocx = async (data: ReportData): Promise<Blob> => {
   // Styles
   const titleFont = data.fonts.title;
   const headerFont = data.fonts.headers;
@@ -324,6 +323,5 @@ export const generateDocx = async (data: ReportData) => {
     ],
   });
 
-  const blob = await Packer.toBlob(doc);
-  saveAs(blob, `${data.fileName || "Ground_Water_Survey_Report"}.docx`);
+  return await Packer.toBlob(doc);
 };
