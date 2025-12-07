@@ -292,7 +292,6 @@ export const generateDocx = async (data: ReportData): Promise<Blob> => {
           new Paragraph({
             children: [new TextRun({ text: "For AQUA GEO SERVICES,", font: bodyFont, bold: true })]
           }),
-          
           ...(signatureImg ? [
               new Paragraph({
                   children: [
@@ -315,6 +314,5 @@ export const generateDocx = async (data: ReportData): Promise<Blob> => {
       },
     ],
   });
-
   return await Packer.toBlob(doc);
 };
