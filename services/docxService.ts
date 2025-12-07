@@ -1,9 +1,8 @@
-
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, ImageRun, VerticalAlign } from "docx";
 import { ReportData } from "../types";
 
-// Removed logoPath as it is no longer required for DOCX
-const signaturePath = 'images/signature.png';
+// Use static path for asset resolution to ensure stability across environments
+const signaturePath = '/images/signature.png';
 
 // Helper to get image data from either Base64 or a URL path
 const getImageData = async (src: string | null): Promise<{ data: Uint8Array; type: "png" | "jpg" | "gif" | "bmp" } | null> => {
@@ -34,6 +33,7 @@ const getImageData = async (src: string | null): Promise<{ data: Uint8Array; typ
     // If it's a file path
     else {
       const lower = src.toLowerCase();
+      // Simple extension check on the URL path, fallback to png if obscure
       if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) type = "jpg";
       else if (lower.endsWith('.gif')) type = "gif";
       else if (lower.endsWith('.bmp')) type = "bmp";
