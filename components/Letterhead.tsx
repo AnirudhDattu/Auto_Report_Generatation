@@ -4,7 +4,10 @@ import { Logo } from './Logo';
 
 export const Letterhead: React.FC = () => {
   return (
-    <div className="w-[calc(100%+5rem)] -ml-10 -mt-10 grid grid-cols-[auto_1fr] gap-0 border-b-0 pb-4 mb-4 items-start pr-10">
+    <div 
+      className="w-[calc(100%+5rem)] -ml-10 -mt-10 grid grid-cols-[auto_1fr] gap-0 border-b-0 pb-4 mb-4 items-start pr-10"
+      style={{ fontFamily: 'Arial, sans-serif' }}
+    >
       {/* Left side: Logo + Company Name */}
       <div className="flex items-center gap-4">
         <div className="shrink-0">
@@ -30,7 +33,10 @@ export const Letterhead: React.FC = () => {
 
 export const Footer: React.FC<{ pageNum: number; surveyorName: string }> = ({ pageNum, surveyorName }) => {
   return (
-    <div className="absolute bottom-10 left-10 right-10 flex justify-between text-xs border-t border-black pt-2 font-medium">
+    <div 
+      className="absolute bottom-10 left-10 right-10 flex justify-between text-xs border-t border-black pt-2 font-medium"
+      style={{ fontFamily: 'Arial, sans-serif' }}
+    >
       <span>Ground Water Survey Report – {surveyorName}</span>
       <span>Page {pageNum}</span>
     </div>

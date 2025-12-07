@@ -4,12 +4,13 @@ import { ReportData, RecommendationRow, FontConfig } from '../types';
 import { 
   ChevronDown, ChevronUp, Plus, Trash2, X, Type, MapPin, 
   Info, User, FileText, Layers, Droplets, Activity,
-  Settings, CheckCircle2, ChevronRight, Sparkles
+  Settings, CheckCircle2, ChevronRight, Sparkles, AlertCircle
 } from 'lucide-react';
 
 interface EditorProps {
   data: ReportData;
   onChange: (newData: ReportData) => void;
+  validationErrors: string[];
 }
 
 const FONT_OPTIONS = [
@@ -75,7 +76,7 @@ const SMART_SUGGESTIONS = {
   ]
 };
 
-export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
+export const Editor: React.FC<EditorProps> = ({ data, onChange, validationErrors }) => {
   const handleChange = (field: keyof ReportData, value: any) => {
     onChange({ ...data, [field]: value });
   };
@@ -163,7 +164,13 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
       {/* --- SETTINGS GROUP --- */}
       <Section title="Report Settings" icon={<Settings size={18} />} defaultOpen>
         <div className="grid grid-cols-1 gap-4">
-            <Input label="Surveyor Name (Footer)" value={data.surveyorName} onChange={(v) => handleChange('surveyorName', v)} placeholder="e.g. GANESH RAJ" />
+            <Input 
+              label="Surveyor Name (Footer)" 
+              value={data.surveyorName} 
+              onChange={(v) => handleChange('surveyorName', v)} 
+              placeholder="e.g. GANESH RAJ" 
+              error={validationErrors.includes('surveyorName')}
+            />
             <Input label="Output Filename" value={data.fileName} onChange={(v) => handleChange('fileName', v)} placeholder="Report_ClientName" />
             
             {/* Typography Sub-section */}
@@ -184,16 +191,39 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
       {/* --- CLIENT INFO GROUP --- */}
       <Section title="Client & Survey Info" icon={<User size={18} />} defaultOpen>
         <div className="grid grid-cols-2 gap-4 mb-4">
-             <Input label="Serial No." numeric value={data.sNo} onChange={(v) => handleChange('sNo', v)} />
-             <Input label="Date" value={data.date} onChange={(v) => handleChange('date', v)} />
+             <Input 
+               label="Serial No." 
+               numeric 
+               value={data.sNo} 
+               onChange={(v) => handleChange('sNo', v)} 
+               error={validationErrors.includes('sNo')}
+             />
+             <Input 
+               label="Date" 
+               value={data.date} 
+               onChange={(v) => handleChange('date', v)} 
+               error={validationErrors.includes('date')}
+             />
         </div>
-        <TextArea label="To Address" value={data.toAddress} onChange={(v) => handleChange('toAddress', v)} rows={3} />
+        <TextArea 
+          label="To Address" 
+          value={data.toAddress} 
+          onChange={(v) => handleChange('toAddress', v)} 
+          rows={3} 
+          error={validationErrors.includes('toAddress')}
+        />
       </Section>
 
       {/* --- SITE DETAILS GROUP --- */}
       <Section title="Site Details" icon={<MapPin size={18} />}>
         <div className="space-y-4">
-            <TextArea label="Location" value={data.location} onChange={(v) => handleChange('location', v)} rows={3} />
+            <TextArea 
+              label="Location" 
+              value={data.location} 
+              onChange={(v) => handleChange('location', v)} 
+              rows={3} 
+              error={validationErrors.includes('location')}
+            />
             <div className="grid grid-cols-1 gap-4">
                 <TextArea label="Physiography" value={data.physiography} onChange={(v) => handleChange('physiography', v)} rows={3} suggestions={SMART_SUGGESTIONS.physiography} />
                 <TextArea label="Topography" value={data.topographical} onChange={(v) => handleChange('topographical', v)} rows={3} suggestions={SMART_SUGGESTIONS.topographical} />
@@ -235,6 +265,13 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
       {/* --- RECOMMENDATIONS GROUP --- */}
       <Section title="Recommendations" icon={<CheckCircle2 size={18} />} defaultOpen>
         <div className="space-y-4">
+            {validationErrors.includes('recommendations') && (
+              <div className="flex items-center gap-2 bg-red-900/30 border border-red-800/50 p-3 rounded-lg text-red-200 text-xs">
+                <AlertCircle size={14} className="shrink-0" />
+                <span>At least one recommendation is required.</span>
+              </div>
+            )}
+            
             {data.recommendations.map((rec, idx) => (
               <CollapsibleRow 
                  key={rec.id || idx} 
@@ -401,37 +438,50 @@ const QuickTags: React.FC<{ options: SuggestionItem[], onSelect: (val: string) =
   </div>
 );
 
-const Input: React.FC<{ label: string; value: string; onChange: (v: string) => void; placeholder?: string; numeric?: boolean }> = ({ label, value, onChange, placeholder, numeric }) => (
+const Input: React.FC<{ label: string; value: string; onChange: (v: string) => void; placeholder?: string; numeric?: boolean; error?: boolean }> = ({ label, value, onChange, placeholder, numeric, error }) => (
   <div className="w-full group">
-    {label && <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1.5 tracking-wider group-focus-within:text-blue-400 transition-colors">{label}</label>}
+    <div className="flex items-center justify-between mb-1.5">
+      {label && <label className={`block text-[10px] uppercase font-bold tracking-wider transition-colors ${error ? 'text-red-400' : 'text-gray-500 group-focus-within:text-blue-400'}`}>{label}</label>}
+      {error && <span className="text-[10px] text-red-400 font-medium animate-pulse">Required</span>}
+    </div>
     <input 
       type="text" 
       inputMode={numeric ? "numeric" : "text"}
       value={value} 
       onChange={(e) => onChange(e.target.value)} 
       placeholder={placeholder}
-      className="w-full bg-[#0B1120] border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-600"
+      className={`w-full bg-[#0B1120] border rounded-lg px-3 py-2.5 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-1 transition-all
+        ${error 
+          ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20' 
+          : 'border-gray-700 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-600'}
+      `}
     />
   </div>
 );
 
-const TextArea: React.FC<{ label: string; value: string; onChange: (v: string) => void; rows?: number; icon?: React.ReactNode; suggestions?: SuggestionItem[] }> = ({ label, value, onChange, rows = 3, icon, suggestions }) => (
+const TextArea: React.FC<{ label: string; value: string; onChange: (v: string) => void; rows?: number; icon?: React.ReactNode; suggestions?: SuggestionItem[]; error?: boolean }> = ({ label, value, onChange, rows = 3, icon, suggestions, error }) => (
   <div className="w-full group">
-    {label && (
-        <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1.5 tracking-wider flex items-center gap-1.5 group-focus-within:text-blue-400 transition-colors">
-            {icon}
-            {label}
-        </label>
-    )}
+    <div className="flex items-center justify-between mb-1.5">
+      {label && (
+          <label className={`block text-[10px] uppercase font-bold tracking-wider flex items-center gap-1.5 transition-colors ${error ? 'text-red-400' : 'text-gray-500 group-focus-within:text-blue-400'}`}>
+              {icon}
+              {label}
+          </label>
+      )}
+      {error && <span className="text-[10px] text-red-400 font-medium animate-pulse">Required</span>}
+    </div>
     <textarea 
       rows={rows}
       value={value} 
       onChange={(e) => onChange(e.target.value)} 
-      className="w-full bg-[#0B1120] border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-600 resize-y leading-relaxed"
+      className={`w-full bg-[#0B1120] border rounded-lg px-3 py-2.5 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-1 transition-all resize-y leading-relaxed
+        ${error 
+          ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20' 
+          : 'border-gray-700 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-600'}
+      `}
     />
     {suggestions && (
       <QuickTags options={suggestions} onSelect={(val) => {
-         // Replaces the content entirely as requested
          onChange(val);
       }} />
     )}

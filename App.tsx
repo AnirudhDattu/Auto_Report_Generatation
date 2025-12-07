@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
   const [view, setView] = useState<'landing' | 'app'>('landing');
   const [previewScale, setPreviewScale] = useState(1);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const previewContainerRef = useRef<HTMLDivElement>(null);
 
   const calculateScale = () => {
@@ -55,7 +56,44 @@ const App: React.FC = () => {
     return () => window.removeEventListener('resize', calculateScale);
   }, []);
 
+  const validateReport = (): boolean => {
+    const errors: string[] = [];
+    
+    // Critical fields check
+    if (!data.surveyorName?.trim()) errors.push('surveyorName');
+    if (!data.sNo?.trim()) errors.push('sNo');
+    if (!data.date?.trim()) errors.push('date');
+    if (!data.toAddress?.trim()) errors.push('toAddress');
+    if (!data.location?.trim()) errors.push('location');
+    
+    // Check recommendations
+    if (!data.recommendations || data.recommendations.length === 0) {
+      errors.push('recommendations');
+    }
+
+    setValidationErrors(errors);
+    return errors.length === 0;
+  };
+
   const handleExport = async (type: 'pdf' | 'docx') => {
+    // Validate before export
+    if (!validateReport()) {
+      // If on mobile preview tab, switch to editor so user can see errors
+      if (activeTab === 'preview') {
+        setActiveTab('editor');
+      }
+      
+      // Determine message based on errors
+      const hasRecError = validationErrors.includes('recommendations') || (data.recommendations.length === 0);
+      let msg = "Please fill in all required fields (highlighted in red) before exporting.";
+      if (hasRecError) {
+        msg += "\n\n• You must add at least one Recommendation.";
+      }
+      
+      alert(msg);
+      return;
+    }
+
     setIsExporting(true);
     try {
       // 1. GENERATION PHASE
@@ -181,7 +219,7 @@ const App: React.FC = () => {
         
         {/* Scrollable Editor Area with touch scrolling enabled */}
         <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 bg-[#0B1120] pb-20 md:pb-0" style={{ WebkitOverflowScrolling: 'touch' }}>
-          <Editor data={data} onChange={setData} />
+          <Editor data={data} onChange={setData} validationErrors={validationErrors} />
         </div>
         
         {/* Desktop Sticky Actions */}
