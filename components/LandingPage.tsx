@@ -36,7 +36,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
               Aqua Geo Services
             </h1>
             <p className="text-xl md:text-2xl text-blue-400 font-medium">
-              This is Production Version
+              This is Production Version test
             </p>
           </div>
 
