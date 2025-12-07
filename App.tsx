@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Page1, Page2 } from './components/ReportContent';
 import { Editor } from './components/Editor';
+import { LandingPage } from './components/LandingPage';
 import { generatePdf } from './services/pdfService';
 import { generateDocx } from './services/docxService';
-import { FileDown, FileText, Loader2, PanelsTopLeft, Eye, Edit3, Share2 } from 'lucide-react';
+import { FileDown, FileText, Loader2, PanelsTopLeft, Eye, Edit3, Share2, ChevronLeft, ArrowLeft } from 'lucide-react';
 import { INITIAL_DATA, ReportData } from './types';
 import saveAs from "file-saver";
 
@@ -11,6 +13,7 @@ const App: React.FC = () => {
   const [data, setData] = useState<ReportData>(INITIAL_DATA);
   const [isExporting, setIsExporting] = useState(false);
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
+  const [view, setView] = useState<'landing' | 'app'>('landing');
   const [previewScale, setPreviewScale] = useState(1);
   const previewContainerRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +47,7 @@ const App: React.FC = () => {
 
     observer.observe(container);
     return () => observer.disconnect();
-  }, [activeTab]); // Re-bind if tab changes (though ref persists usually)
+  }, [activeTab, view]); // Re-bind if tab or view changes
 
   // Listen to window resize as fallback
   useEffect(() => {
@@ -55,40 +58,69 @@ const App: React.FC = () => {
   const handleExport = async (type: 'pdf' | 'docx') => {
     setIsExporting(true);
     try {
+      // 1. GENERATION PHASE
       let blob: Blob;
       let extension: string;
       let mimeType: string;
 
-      if (type === 'pdf') {
-         blob = await generatePdf(data.fileName || "report");
-         extension = 'pdf';
-         mimeType = 'application/pdf';
-      } else {
-         blob = await generateDocx(data);
-         extension = 'docx';
-         mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      try {
+        if (type === 'pdf') {
+           blob = await generatePdf(data.fileName || "report");
+           extension = 'pdf';
+           mimeType = 'application/pdf';
+        } else {
+           blob = await generateDocx(data);
+           extension = 'docx';
+           mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        }
+      } catch (genError) {
+        console.error("File generation failed:", genError);
+        alert("Failed to generate the file. Please check input data.");
+        setIsExporting(false);
+        return;
       }
 
       const filename = `${data.fileName || 'report'}.${extension}`;
       const file = new File([blob], filename, { type: mimeType });
 
-      // Check if mobile device
+      // 2. SHARING / DOWNLOAD PHASE
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      let actionCompleted = false;
 
-      // Prefer Native Share on Mobile only
-      if (isMobile && navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: 'Survey Report',
-          text: 'Here is the generated survey report.',
-        });
-      } else {
-        // Force Download on Desktop
+      if (isMobile && navigator.share) {
+        try {
+          const shareData = {
+            files: [file],
+            title: 'Survey Report',
+            text: 'Here is the generated survey report.',
+          };
+
+          // Check if the browser supports sharing these specific files
+          if (navigator.canShare && !navigator.canShare(shareData)) {
+             console.warn("Navigator cannot share this content, falling back to download.");
+          } else {
+             await navigator.share(shareData);
+             actionCompleted = true; // Share successful
+          }
+        } catch (shareError: any) {
+          // If user cancelled, we consider it handled (don't force download)
+          if (shareError.name === 'AbortError') {
+             actionCompleted = true; 
+          } else {
+             console.warn("Share failed:", shareError);
+             // actionCompleted remains false, will trigger download
+          }
+        }
+      }
+
+      // If share was not performed (unsupported, failed, or desktop), download the file
+      if (!actionCompleted) {
         saveAs(blob, filename);
       }
+
     } catch (e) {
-      console.error("Export error:", e);
-      alert("Error generating file. Please check console for details.");
+      console.error("Unexpected export error:", e);
+      alert("An unexpected error occurred during export.");
     } finally {
       setIsExporting(false);
     }
@@ -99,72 +131,98 @@ const App: React.FC = () => {
   const GAP = 40;
   const contentHeight = ((PAGE_HEIGHT * 2) + GAP) * previewScale;
 
+  if (view === 'landing') {
+    return <LandingPage onStart={() => setView('app')} />;
+  }
+
   return (
     // Use h-[100dvh] for mobile browsers to account for address bars
-    <div className="h-[100dvh] flex flex-col md:flex-row overflow-hidden bg-[#111827] text-white font-sans">
+    <div className="h-[100dvh] flex flex-col md:flex-row overflow-hidden bg-[#111827] text-white font-sans transition-opacity duration-500 ease-in-out opacity-100">
       
       {/* Mobile Tab Navigation */}
-      <div className="md:hidden flex-shrink-0 flex border-b border-gray-800 bg-[#0B1120]">
+      <div className="md:hidden flex-shrink-0 flex items-center border-b border-gray-800 bg-[#0B1120] relative z-30">
+        <button 
+           onClick={() => setView('landing')}
+           className="p-3 text-gray-400 hover:text-white border-r border-gray-800"
+        >
+          <ArrowLeft size={20} />
+        </button>
         <button 
           onClick={() => setActiveTab('editor')}
-          className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 ${activeTab === 'editor' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+          className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'editor' ? 'text-blue-400 bg-gray-800/50' : 'text-gray-400'}`}
         >
           <Edit3 size={16} /> Editor
         </button>
         <button 
           onClick={() => setActiveTab('preview')}
-          className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 ${activeTab === 'preview' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+          className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'preview' ? 'text-blue-400 bg-gray-800/50' : 'text-gray-400'}`}
         >
           <Eye size={16} /> Preview
         </button>
       </div>
 
       {/* Editor Panel - Responsive Width */}
-      <div className={`${activeTab === 'editor' ? 'flex' : 'hidden'} md:flex w-full md:w-[380px] lg:w-[450px] flex-shrink-0 flex-col border-r border-gray-800 bg-[#0B1120] h-full overflow-hidden z-20`}>
-        <div className="p-4 border-b border-gray-800 flex items-center gap-3 flex-shrink-0">
-          <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/50">
-             <PanelsTopLeft size={18} />
-          </div>
-          <div>
-            <h1 className="font-bold text-base leading-tight">Report Builder</h1>
-            <p className="text-xs text-gray-500">Aqua Geo Services</p>
+      <div className={`${activeTab === 'editor' ? 'flex' : 'hidden'} md:flex w-full md:w-[420px] lg:w-[480px] flex-shrink-0 flex-col border-r border-gray-800 bg-[#0B1120] h-full overflow-hidden z-20 shadow-xl relative`}>
+        {/* Sidebar Header */}
+        <div className="p-4 border-b border-gray-800 flex items-center justify-between flex-shrink-0 bg-[#0B1120]/95 backdrop-blur z-20">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setView('landing')}
+              className="hidden md:flex w-8 h-8 rounded-full items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+              title="Back to Home"
+            >
+              <ArrowLeft size={16} />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-900/30">
+                <PanelsTopLeft size={16} className="text-white" />
+              </div>
+              <div>
+                <h1 className="font-bold text-sm text-gray-100 leading-tight">Report Editor</h1>
+                <p className="text-[10px] text-gray-500 font-medium tracking-wide uppercase">Aqua Geo Services</p>
+              </div>
+            </div>
           </div>
         </div>
         
         {/* Scrollable Editor Area with touch scrolling enabled */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 bg-[#0B1120]" style={{ WebkitOverflowScrolling: 'touch' }}>
           <Editor data={data} onChange={setData} />
         </div>
         
-        {/* Desktop Actions */}
-        <div className="hidden md:flex flex-col gap-2 p-4 border-t border-gray-800 bg-[#0B1120] flex-shrink-0">
-           <button
-            onClick={() => handleExport('pdf')}
-            disabled={isExporting}
-            className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-medium shadow-lg transition-colors disabled:opacity-50 text-sm"
-          >
-            {isExporting ? <Loader2 className="animate-spin w-4 h-4" /> : <FileText className="w-4 h-4" />}
-            Download PDF
-          </button>
-           <button
-            onClick={() => handleExport('docx')}
-            disabled={isExporting}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium shadow-lg transition-colors disabled:opacity-50 text-sm"
-          >
-            {isExporting ? <Loader2 className="animate-spin w-4 h-4" /> : <FileDown className="w-4 h-4" />}
-            Download DOCX
-          </button>
+        {/* Desktop Sticky Actions */}
+        <div className="hidden md:flex flex-col gap-3 p-4 border-t border-gray-800 bg-[#0B1120] flex-shrink-0 z-20">
+           <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => handleExport('pdf')}
+                disabled={isExporting}
+                className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white px-4 py-3 rounded-xl font-medium shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs uppercase tracking-wide group"
+              >
+                {isExporting ? <Loader2 className="animate-spin w-4 h-4" /> : <FileText className="w-4 h-4 group-hover:scale-110 transition-transform" />}
+                Export PDF
+              </button>
+              <button
+                onClick={() => handleExport('docx')}
+                disabled={isExporting}
+                className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-4 py-3 rounded-xl font-medium shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs uppercase tracking-wide group"
+              >
+                {isExporting ? <Loader2 className="animate-spin w-4 h-4" /> : <FileDown className="w-4 h-4 group-hover:scale-110 transition-transform" />}
+                Export Word
+              </button>
+           </div>
         </div>
       </div>
 
       {/* Preview Panel */}
       <div 
         ref={previewContainerRef}
-        className={`${activeTab === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 bg-gray-900 flex-col items-center relative h-full overflow-hidden z-10`}
+        className={`${activeTab === 'preview' ? 'flex' : 'hidden'} md:flex flex-1 bg-gray-950/80 flex-col items-center relative h-full overflow-hidden z-10 backdrop-blur-sm`}
       >
+         {/* Background pattern for preview area */}
+         <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#4b5563 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
          
          {/* Scrollable Preview Area */}
-         <div className="flex-1 w-full overflow-y-auto p-4 md:p-8 flex flex-col items-center min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+         <div className="flex-1 w-full overflow-y-auto p-4 md:p-8 flex flex-col items-center min-h-0 relative z-10" style={{ WebkitOverflowScrolling: 'touch' }}>
             {/* Height wrapper matches scaled content exactly to prevent blank scroll */}
             <div 
                style={{ 
@@ -173,7 +231,7 @@ const App: React.FC = () => {
                   position: 'relative',
                   flexShrink: 0,
                   // Add a small bottom margin for mobile FABs so content isn't covered
-                  marginBottom: '80px' 
+                  marginBottom: '100px' 
                }}
             >
                {/* Scaled content */}
@@ -181,10 +239,10 @@ const App: React.FC = () => {
                   className="origin-top-left flex flex-col gap-[40px] absolute top-0 left-0"
                   style={{ transform: `scale(${previewScale})` }}
                >
-                  <div className="shadow-2xl ring-1 ring-white/10 bg-white">
+                  <div className="shadow-2xl ring-1 ring-black/10 bg-white transition-shadow hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)]">
                     <Page1 data={data} />
                   </div>
-                  <div className="shadow-2xl ring-1 ring-white/10 bg-white">
+                  <div className="shadow-2xl ring-1 ring-black/10 bg-white transition-shadow hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)]">
                     <Page2 data={data} />
                   </div>
                </div>
@@ -196,7 +254,7 @@ const App: React.FC = () => {
             <button
               onClick={() => handleExport('pdf')}
               disabled={isExporting}
-              className="w-14 h-14 rounded-full bg-red-600 text-white shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
+              className="w-14 h-14 rounded-full bg-red-600 text-white shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-red-500"
               title="Share/Download PDF"
             >
                {isExporting ? <Loader2 className="animate-spin" /> : <Share2 />}
@@ -204,7 +262,7 @@ const App: React.FC = () => {
             <button
               onClick={() => handleExport('docx')}
               disabled={isExporting}
-              className="w-14 h-14 rounded-full bg-blue-600 text-white shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
+              className="w-14 h-14 rounded-full bg-blue-600 text-white shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-blue-500"
               title="Share/Download DOCX"
             >
                {isExporting ? <Loader2 className="animate-spin" /> : <FileDown />}
