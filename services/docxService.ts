@@ -1,5 +1,9 @@
+
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, ImageRun } from "docx";
 import { ReportData } from "../types";
+
+// Removed logoPath as it is no longer required for DOCX
+const signaturePath = 'images/signature.png';
 
 // Helper to get image data from either Base64 or a URL path
 const getImageData = async (src: string | null): Promise<{ data: Uint8Array; type: "png" | "jpg" | "gif" | "bmp" } | null> => {
@@ -27,7 +31,7 @@ const getImageData = async (src: string | null): Promise<{ data: Uint8Array; typ
           data[i] = binaryString.charCodeAt(i);
       }
     } 
-    // If it's a file path (e.g., "/logo.png")
+    // If it's a file path
     else {
       const lower = src.toLowerCase();
       if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) type = "jpg";
@@ -58,9 +62,8 @@ export const generateDocx = async (data: ReportData): Promise<Blob> => {
   const createNormalText = (text: string) => new TextRun({ text, font: bodyFont, size });
   const createUnderlineBold = (text: string) => new TextRun({ text, font: headerFont, size, bold: true, underline: { type: "single" } });
 
-  // Load static images (assuming they exist in public root as requested by user)
-  const logoImg = await getImageData("/logo.png");
-  const signatureImg = await getImageData("/signature.png");
+  // Load signature image only
+  const signatureImg = await getImageData(signaturePath);
 
   // Table Cell Helper with margins
   const createCell = (text: string, fill: string, widthPercent: number, bold: boolean = false) => {
@@ -142,19 +145,7 @@ export const generateDocx = async (data: ReportData): Promise<Blob> => {
       {
         properties: {},
         children: [
-          // Logo if exists
-          ...(logoImg ? [
-              new Paragraph({
-                  children: [
-                      new ImageRun({
-                          data: logoImg.data,
-                          transformation: { width: 100, height: 100 },
-                          type: logoImg.type,
-                      }),
-                  ],
-                  spacing: { after: 200 }
-              })
-          ] : []),
+          // Logo removed for DOCX export as requested
 
           // Header info
           new Paragraph({
