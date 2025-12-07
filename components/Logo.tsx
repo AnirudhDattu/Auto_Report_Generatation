@@ -3,7 +3,7 @@ import React from 'react';
 
 export const Logo: React.FC = () => {
   return (
-    <div className="flex flex-col items-center justify-center w-24 h-24 relative">
+    <div className="flex flex-col items-center justify-center w-16 h-16 relative">
       <img 
         src="images/logo.png" 
         alt="AGS Logo" 

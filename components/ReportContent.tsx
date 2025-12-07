@@ -123,13 +123,13 @@ export const Page2: React.FC<PageProps> = ({ data }) => {
           <div className="bg-orange-400 p-2 flex items-center justify-center">Recommended<br/>PVC Casing</div>
         </div>
         
-        {/* Units Row */}
+        {/* Units Row - Fixed Alignment: Added flex items-center justify-center to mimic the header row */}
         <div className="grid grid-cols-[60px_1fr_1fr_1fr_1fr] text-center font-bold text-xs border-b border-black bg-orange-400" style={headerStyle}>
-          <div className="p-1 border-r border-black">Code</div>
-          <div className="p-1 border-r border-black">(Feet)</div>
-          <div className="p-1 border-r border-black">LPH (V notch Flow)</div>
-          <div className="p-1 border-r border-black">(Feet)</div>
-          <div className="p-1">(Feet)</div>
+          <div className="p-1 border-r border-black flex items-center justify-center">Code</div>
+          <div className="p-1 border-r border-black flex items-center justify-center">(Feet)</div>
+          <div className="p-1 border-r border-black flex items-center justify-center">LPH (V notch Flow)</div>
+          <div className="p-1 border-r border-black flex items-center justify-center">(Feet)</div>
+          <div className="p-1 flex items-center justify-center">(Feet)</div>
         </div>
 
         {/* Dynamic Rows */}
@@ -168,13 +168,15 @@ export const Page2: React.FC<PageProps> = ({ data }) => {
           To be on the safe side, cautious and to avoid any confusing situation, the clients are advised
           to make a note of the following facts:
         </p>
-        <ol className="list-decimal ml-10 space-y-4">
+        {/* Remarks List - Replaced <ol> with Flexbox to ensure perfect alignment in PDF generation */}
+        <div className="ml-4 space-y-4">
           {data.remarks.map((rem, idx) => (
-             <li key={idx}>
+             <div key={idx} className="flex gap-4 items-start">
+               <span className="font-bold flex-shrink-0">{idx + 1}.</span>
                <span dangerouslySetInnerHTML={{ __html: rem.replace(/(YOU)/g, '<b>$1</b>').replace(/(ONE feet radius)/g, '<b>$1</b>') }} />
-             </li>
+             </div>
           ))}
-        </ol>
+        </div>
       </div>
 
       <div className="mb-8">

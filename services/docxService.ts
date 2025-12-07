@@ -1,5 +1,5 @@
 
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, ImageRun } from "docx";
+import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, ShadingType, ImageRun, VerticalAlign } from "docx";
 import { ReportData } from "../types";
 
 // Removed logoPath as it is no longer required for DOCX
@@ -70,6 +70,7 @@ export const generateDocx = async (data: ReportData): Promise<Blob> => {
     return new TableCell({
       width: { size: widthPercent, type: WidthType.PERCENTAGE },
       shading: { fill: fill, type: ShadingType.CLEAR, color: "auto" },
+      verticalAlign: VerticalAlign.CENTER,
       margins: {
          top: 100,
          bottom: 100,
@@ -124,6 +125,7 @@ export const generateDocx = async (data: ReportData): Promise<Blob> => {
           new TableCell({
             columnSpan: 5,
             shading: { fill: mapColor(rec.priorityColor) },
+            verticalAlign: VerticalAlign.CENTER,
             children: [new Paragraph({ children: [new TextRun({ text: rec.priorityLabel, font: headerFont, size: 20, bold: true })], alignment: "center" })]
           })
         ]
