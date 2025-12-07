@@ -1,10 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ReportData, RecommendationRow, FontConfig } from '../types';
 import { 
   ChevronDown, ChevronUp, Plus, Trash2, X, Type, MapPin, 
-  AlignLeft, Info, User, FileText, Layers, Droplets, Activity,
-  Settings, CheckCircle2
+  Info, User, FileText, Layers, Droplets, Activity,
+  Settings, CheckCircle2, ChevronRight, Sparkles
 } from 'lucide-react';
 
 interface EditorProps {
@@ -35,6 +35,45 @@ const ROW_COLORS = [
   { value: 'bg-orange-400', label: 'Orange', class: 'bg-orange-400' },
   { value: 'bg-gray-200', label: 'Light', class: 'bg-gray-200' },
 ];
+
+// Smart suggestions mapping Label -> Full Text
+const SMART_SUGGESTIONS = {
+  physiography: [
+    { label: "Sloping/Drainage", text: "There is no river course present near the above-said investigated land. However, some first-order drainage patterns were observed on the sloping land surface." },
+    { label: "Ridge Portion", text: "There is no river course present near the above-said investigated land. The area is situated mostly on a ridge portion." },
+    { label: "Flat Terrain", text: "The area consists of flat terrain with no significant drainage patterns observed in the immediate vicinity." }
+  ],
+  topographical: [
+    { label: "Mixed/Ridge", text: "The investigated land got different topographical Observations mostly ridge portions, upland areas, and sloping land surface places." },
+    { label: "Sloping", text: "The investigated land is characterized mostly by sloping land surface with undulating terrain." },
+    { label: "Plain", text: "The investigated land is mostly a plain area with minimal undulations." }
+  ],
+  geological: [
+    { label: "Granite/Sheet Rock", text: "The formation present in the land is the ARCHEAN group of rocks. The lithology of the area is mostly fractured and semi-fractured granite. Most of the area is covered with granitic sheet rock." },
+    { label: "Weathered/Soil", text: "The formation present in the land is the ARCHEAN group of rocks. The lithology consists of weathered soil cover followed by semi-fractured granite." },
+    { label: "Fractured", text: "The formation is ARCHEAN. The area is characterized by highly fractured granite with good lineament intersections." }
+  ],
+  hydrological: [
+    { label: "Mixed (Mod/Fav)", text: "Hydrological conditions of the above-said land are moderately favorable in some parts of the land and Favorable in some other parts." },
+    { label: "Favorable", text: "Hydrological conditions of the above-said land are highly Favorable due to the presence of interconnected fractures." },
+    { label: "Poor", text: "Hydrological conditions of the above-said land are Poor due to the massive nature of the rock and lack of recharge sources." }
+  ],
+  rocks: [
+    { label: "None", text: "No Dolerite Intrusive rocks presence was observed in and around the above said investigated land." },
+    { label: "Dolerite Dyke", text: "Intrusive rocks (Dolerite Dyke) were observed passing through the investigated area." },
+    { label: "Quartz", text: "Quartz veins were observed intruding the granitic formation in the surveyed area." }
+  ],
+  groundwater: [
+    { label: "Satisfactory", text: "Bore wells / open wells present in and around the site are yielding SATISFACTORILY." },
+    { label: "Good Yield", text: "Bore wells / open wells present in and around the site are yielding GOOD quantity of water." },
+    { label: "Poor/Dry", text: "Bore wells / open wells present in and around the site are yielding POORLY or are dry." }
+  ],
+  geoResults: [
+    { label: "Mod. Favorable", text: "Moderately Favorable Results Obtained." },
+    { label: "Favorable", text: "Favorable Results Obtained indicating potential aquifer zones." },
+    { label: "High Resistivity", text: "High resistivity values obtained, indicating massive rock formation." }
+  ]
+};
 
 export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
   const handleChange = (field: keyof ReportData, value: any) => {
@@ -145,7 +184,7 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
       {/* --- CLIENT INFO GROUP --- */}
       <Section title="Client & Survey Info" icon={<User size={18} />} defaultOpen>
         <div className="grid grid-cols-2 gap-4 mb-4">
-             <Input label="Serial No." value={data.sNo} onChange={(v) => handleChange('sNo', v)} />
+             <Input label="Serial No." numeric value={data.sNo} onChange={(v) => handleChange('sNo', v)} />
              <Input label="Date" value={data.date} onChange={(v) => handleChange('date', v)} />
         </div>
         <TextArea label="To Address" value={data.toAddress} onChange={(v) => handleChange('toAddress', v)} rows={3} />
@@ -156,9 +195,9 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
         <div className="space-y-4">
             <TextArea label="Location" value={data.location} onChange={(v) => handleChange('location', v)} rows={3} />
             <div className="grid grid-cols-1 gap-4">
-                <TextArea label="Physiography" value={data.physiography} onChange={(v) => handleChange('physiography', v)} rows={3} />
-                <TextArea label="Topography" value={data.topographical} onChange={(v) => handleChange('topographical', v)} rows={3} />
-                <TextArea label="Geological Condition" value={data.geological} onChange={(v) => handleChange('geological', v)} rows={3} />
+                <TextArea label="Physiography" value={data.physiography} onChange={(v) => handleChange('physiography', v)} rows={3} suggestions={SMART_SUGGESTIONS.physiography} />
+                <TextArea label="Topography" value={data.topographical} onChange={(v) => handleChange('topographical', v)} rows={3} suggestions={SMART_SUGGESTIONS.topographical} />
+                <TextArea label="Geological Condition" value={data.geological} onChange={(v) => handleChange('geological', v)} rows={3} suggestions={SMART_SUGGESTIONS.geological} />
             </div>
         </div>
       </Section>
@@ -175,9 +214,9 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
       {/* --- HYDRO GROUP --- */}
       <Section title="Hydro & Geophysics" icon={<Droplets size={18} />}>
         <div className="space-y-4">
-            <TextArea label="Hydrological Condition" value={data.hydrological} onChange={(v) => handleChange('hydrological', v)} rows={2} />
-            <TextArea label="Intrusive Rocks" value={data.intrusiveRocks} onChange={(v) => handleChange('intrusiveRocks', v)} rows={2} />
-            <TextArea label="Groundwater Cond." value={data.groundwater} onChange={(v) => handleChange('groundwater', v)} rows={2} />
+            <TextArea label="Hydrological Condition" value={data.hydrological} onChange={(v) => handleChange('hydrological', v)} rows={2} suggestions={SMART_SUGGESTIONS.hydrological} />
+            <TextArea label="Intrusive Rocks" value={data.intrusiveRocks} onChange={(v) => handleChange('intrusiveRocks', v)} rows={2} suggestions={SMART_SUGGESTIONS.rocks} />
+            <TextArea label="Groundwater Cond." value={data.groundwater} onChange={(v) => handleChange('groundwater', v)} rows={2} suggestions={SMART_SUGGESTIONS.groundwater} />
             
             <div className="p-4 bg-blue-900/10 rounded-xl border border-blue-900/30">
               <div className="flex items-center gap-2 mb-3">
@@ -187,6 +226,7 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
               <div className="grid grid-cols-1 gap-3">
                 <Input label="Survey Type" value={data.geophysical.type} onChange={(v) => handleDeepChange('geophysical', 'type', v)} />
                 <Input label="Results" value={data.geophysical.results} onChange={(v) => handleDeepChange('geophysical', 'results', v)} />
+                <QuickTags options={SMART_SUGGESTIONS.geoResults} onSelect={(val) => handleDeepChange('geophysical', 'results', val)} />
               </div>
             </div>
         </div>
@@ -196,20 +236,13 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
       <Section title="Recommendations" icon={<CheckCircle2 size={18} />} defaultOpen>
         <div className="space-y-4">
             {data.recommendations.map((rec, idx) => (
-              <div key={rec.id || idx} className="bg-[#131B2C] p-4 rounded-xl border border-gray-700/50 shadow-sm relative group">
-                 {/* Row Actions */}
-                 <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-bold text-gray-500 bg-gray-800 px-2 py-1 rounded-md">Row {idx + 1}</span>
-                    <button 
-                      onClick={() => removeRecommendation(idx)}
-                      className="text-gray-500 hover:text-red-400 transition-colors p-1"
-                      title="Remove Row"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                 </div>
-
-                 <div className="grid grid-cols-1 gap-4">
+              <CollapsibleRow 
+                 key={rec.id || idx} 
+                 title={`Point #${rec.pointNo} - ${rec.depth}ft`} 
+                 subtitle={rec.priorityLabel}
+                 onDelete={() => removeRecommendation(idx)}
+              >
+                 <div className="grid grid-cols-1 gap-4 pt-2">
                     {/* Priority Config */}
                     <div className="bg-gray-900/50 p-3 rounded-lg border border-gray-800">
                         <Input label="Priority Title" value={rec.priorityLabel} onChange={(v) => updateRecommendation(idx, 'priorityLabel', v)} />
@@ -225,10 +258,10 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
 
                     {/* Data Fields */}
                     <div className="grid grid-cols-2 gap-3">
-                       <Input label="Point No" value={rec.pointNo} onChange={(v) => updateRecommendation(idx, 'pointNo', v)} />
-                       <Input label="Depth" value={rec.depth} onChange={(v) => updateRecommendation(idx, 'depth', v)} />
+                       <Input label="Point No" numeric value={rec.pointNo} onChange={(v) => updateRecommendation(idx, 'pointNo', v)} />
+                       <Input label="Depth" numeric value={rec.depth} onChange={(v) => updateRecommendation(idx, 'depth', v)} />
                        <Input label="Yield" value={rec.yieldVal} onChange={(v) => updateRecommendation(idx, 'yieldVal', v)} />
-                       <Input label="Casing" value={rec.casing} onChange={(v) => updateRecommendation(idx, 'casing', v)} />
+                       <Input label="Casing" numeric value={rec.casing} onChange={(v) => updateRecommendation(idx, 'casing', v)} />
                     </div>
                     <TextArea label="Layers" value={rec.layers} onChange={(v) => updateRecommendation(idx, 'layers', v)} rows={2} />
 
@@ -242,7 +275,7 @@ export const Editor: React.FC<EditorProps> = ({ data, onChange }) => {
                         />
                     </div>
                  </div>
-              </div>
+              </CollapsibleRow>
             ))}
             
             <button 
@@ -317,11 +350,63 @@ const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.
   );
 };
 
-const Input: React.FC<{ label: string; value: string; onChange: (v: string) => void; placeholder?: string }> = ({ label, value, onChange, placeholder }) => (
+// Collapsible Row for Recommendations
+const CollapsibleRow: React.FC<{ title: string; subtitle: string; children: React.ReactNode; onDelete: () => void }> = ({ title, subtitle, children, onDelete }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="bg-[#131B2C] rounded-xl border border-gray-700/50 shadow-sm overflow-hidden">
+      <div 
+         className="flex items-center justify-between p-3 cursor-pointer hover:bg-white/5 transition-colors"
+         onClick={() => setIsOpen(!isOpen)}
+      >
+         <div className="flex items-center gap-3">
+            <div className={`text-gray-500 transition-transform ${isOpen ? 'rotate-90' : ''}`}>
+               <ChevronRight size={16} />
+            </div>
+            <div>
+               <p className="font-bold text-gray-200 text-xs">{title}</p>
+               <p className="text-[10px] text-gray-500">{subtitle}</p>
+            </div>
+         </div>
+         <button 
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            className="text-gray-600 hover:text-red-400 p-2"
+         >
+            <Trash2 size={16} />
+         </button>
+      </div>
+      {isOpen && <div className="p-4 pt-0 border-t border-gray-800/50">{children}</div>}
+    </div>
+  );
+};
+
+interface SuggestionItem {
+  label: string;
+  text: string;
+}
+
+const QuickTags: React.FC<{ options: SuggestionItem[], onSelect: (val: string) => void }> = ({ options, onSelect }) => (
+  <div className="flex flex-wrap gap-2 mt-2">
+    {options.map((opt) => (
+      <button
+        key={opt.label}
+        onClick={() => onSelect(opt.text)}
+        className="flex items-center gap-1 bg-gray-800 hover:bg-blue-900/40 text-[10px] text-gray-400 hover:text-blue-300 px-2.5 py-1 rounded-full border border-gray-700 hover:border-blue-800 transition-all"
+        title={opt.text}
+      >
+        <Sparkles size={10} />
+        {opt.label}
+      </button>
+    ))}
+  </div>
+);
+
+const Input: React.FC<{ label: string; value: string; onChange: (v: string) => void; placeholder?: string; numeric?: boolean }> = ({ label, value, onChange, placeholder, numeric }) => (
   <div className="w-full group">
     {label && <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1.5 tracking-wider group-focus-within:text-blue-400 transition-colors">{label}</label>}
     <input 
       type="text" 
+      inputMode={numeric ? "numeric" : "text"}
       value={value} 
       onChange={(e) => onChange(e.target.value)} 
       placeholder={placeholder}
@@ -330,7 +415,7 @@ const Input: React.FC<{ label: string; value: string; onChange: (v: string) => v
   </div>
 );
 
-const TextArea: React.FC<{ label: string; value: string; onChange: (v: string) => void; rows?: number; icon?: React.ReactNode }> = ({ label, value, onChange, rows = 3, icon }) => (
+const TextArea: React.FC<{ label: string; value: string; onChange: (v: string) => void; rows?: number; icon?: React.ReactNode; suggestions?: SuggestionItem[] }> = ({ label, value, onChange, rows = 3, icon, suggestions }) => (
   <div className="w-full group">
     {label && (
         <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1.5 tracking-wider flex items-center gap-1.5 group-focus-within:text-blue-400 transition-colors">
@@ -344,6 +429,12 @@ const TextArea: React.FC<{ label: string; value: string; onChange: (v: string) =
       onChange={(e) => onChange(e.target.value)} 
       className="w-full bg-[#0B1120] border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-600 resize-y leading-relaxed"
     />
+    {suggestions && (
+      <QuickTags options={suggestions} onSelect={(val) => {
+         // Replaces the content entirely as requested
+         onChange(val);
+      }} />
+    )}
   </div>
 );
 

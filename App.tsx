@@ -5,7 +5,7 @@ import { Editor } from './components/Editor';
 import { LandingPage } from './components/LandingPage';
 import { generatePdf } from './services/pdfService';
 import { generateDocx } from './services/docxService';
-import { FileDown, FileText, Loader2, PanelsTopLeft, Eye, Edit3, Share2, ChevronLeft, ArrowLeft } from 'lucide-react';
+import { FileDown, FileText, Loader2, PanelsTopLeft, Eye, Edit3, Share2, ChevronLeft, ArrowLeft, Layout } from 'lucide-react';
 import { INITIAL_DATA, ReportData } from './types';
 import saveAs from "file-saver";
 
@@ -139,36 +139,30 @@ const App: React.FC = () => {
     // Use h-[100dvh] for mobile browsers to account for address bars
     <div className="h-[100dvh] flex flex-col md:flex-row overflow-hidden bg-[#111827] text-white font-sans transition-opacity duration-500 ease-in-out opacity-100">
       
-      {/* Mobile Tab Navigation */}
-      <div className="md:hidden flex-shrink-0 flex items-center border-b border-gray-800 bg-[#0B1120] relative z-30">
-        <button 
-           onClick={() => setView('landing')}
-           className="p-3 text-gray-400 hover:text-white border-r border-gray-800"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <button 
-          onClick={() => setActiveTab('editor')}
-          className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'editor' ? 'text-blue-400 bg-gray-800/50' : 'text-gray-400'}`}
-        >
-          <Edit3 size={16} /> Editor
-        </button>
-        <button 
-          onClick={() => setActiveTab('preview')}
-          className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'preview' ? 'text-blue-400 bg-gray-800/50' : 'text-gray-400'}`}
-        >
-          <Eye size={16} /> Preview
-        </button>
+      {/* Mobile Top Header (Back & Title) */}
+      <div className="md:hidden flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-[#0B1120] relative z-30">
+        <div className="flex items-center gap-3">
+          <button 
+             onClick={() => setView('landing')}
+             className="text-gray-400 hover:text-white"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <span className="font-semibold text-sm">Report Builder</span>
+        </div>
+        <div className="w-6 h-6 rounded-md bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
+            <PanelsTopLeft size={12} className="text-white" />
+        </div>
       </div>
 
       {/* Editor Panel - Responsive Width */}
       <div className={`${activeTab === 'editor' ? 'flex' : 'hidden'} md:flex w-full md:w-[420px] lg:w-[480px] flex-shrink-0 flex-col border-r border-gray-800 bg-[#0B1120] h-full overflow-hidden z-20 shadow-xl relative`}>
-        {/* Sidebar Header */}
-        <div className="p-4 border-b border-gray-800 flex items-center justify-between flex-shrink-0 bg-[#0B1120]/95 backdrop-blur z-20">
+        {/* Sidebar Header (Desktop) */}
+        <div className="hidden md:flex p-4 border-b border-gray-800 items-center justify-between flex-shrink-0 bg-[#0B1120]/95 backdrop-blur z-20">
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setView('landing')}
-              className="hidden md:flex w-8 h-8 rounded-full items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+              className="flex w-8 h-8 rounded-full items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
               title="Back to Home"
             >
               <ArrowLeft size={16} />
@@ -186,7 +180,7 @@ const App: React.FC = () => {
         </div>
         
         {/* Scrollable Editor Area with touch scrolling enabled */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 bg-[#0B1120]" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 bg-[#0B1120] pb-20 md:pb-0" style={{ WebkitOverflowScrolling: 'touch' }}>
           <Editor data={data} onChange={setData} />
         </div>
         
@@ -222,7 +216,7 @@ const App: React.FC = () => {
          <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#4b5563 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
          
          {/* Scrollable Preview Area */}
-         <div className="flex-1 w-full overflow-y-auto p-4 md:p-8 flex flex-col items-center min-h-0 relative z-10" style={{ WebkitOverflowScrolling: 'touch' }}>
+         <div className="flex-1 w-full overflow-y-auto p-4 md:p-8 flex flex-col items-center min-h-0 relative z-10 pb-32 md:pb-8" style={{ WebkitOverflowScrolling: 'touch' }}>
             {/* Height wrapper matches scaled content exactly to prevent blank scroll */}
             <div 
                style={{ 
@@ -230,8 +224,6 @@ const App: React.FC = () => {
                   height: `${contentHeight}px`,
                   position: 'relative',
                   flexShrink: 0,
-                  // Add a small bottom margin for mobile FABs so content isn't covered
-                  marginBottom: '100px' 
                }}
             >
                {/* Scaled content */}
@@ -249,25 +241,49 @@ const App: React.FC = () => {
             </div>
          </div>
 
-         {/* Mobile Floating Action Buttons */}
-         <div className="md:hidden absolute bottom-6 right-6 flex flex-col gap-3 z-50">
+         {/* Mobile Floating Action Buttons (Only visible in Preview) */}
+         <div className={`md:hidden absolute bottom-24 right-6 flex flex-col gap-3 z-50 transition-transform duration-300 ${activeTab === 'preview' ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}>
             <button
               onClick={() => handleExport('pdf')}
               disabled={isExporting}
-              className="w-14 h-14 rounded-full bg-red-600 text-white shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-red-500"
+              className="w-12 h-12 rounded-full bg-red-600 text-white shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-red-500"
               title="Share/Download PDF"
             >
-               {isExporting ? <Loader2 className="animate-spin" /> : <Share2 />}
+               {isExporting ? <Loader2 className="animate-spin w-5 h-5" /> : <Share2 className="w-5 h-5" />}
             </button>
             <button
               onClick={() => handleExport('docx')}
               disabled={isExporting}
-              className="w-14 h-14 rounded-full bg-blue-600 text-white shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-blue-500"
+              className="w-12 h-12 rounded-full bg-blue-600 text-white shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-blue-500"
               title="Share/Download DOCX"
             >
-               {isExporting ? <Loader2 className="animate-spin" /> : <FileDown />}
+               {isExporting ? <Loader2 className="animate-spin w-5 h-5" /> : <FileDown className="w-5 h-5" />}
             </button>
          </div>
+      </div>
+
+      {/* Mobile Bottom Navigation Bar (Thumb Friendly) */}
+      <div className="md:hidden flex-shrink-0 flex items-center border-t border-gray-800 bg-[#0B1120] pb-[env(safe-area-inset-bottom)] z-40 fixed bottom-0 w-full shadow-[0_-5px_15px_rgba(0,0,0,0.5)]">
+        <button 
+          onClick={() => setActiveTab('editor')}
+          className={`flex-1 py-4 text-xs font-medium flex flex-col items-center justify-center gap-1 transition-colors relative ${activeTab === 'editor' ? 'text-blue-400' : 'text-gray-500'}`}
+        >
+          <Edit3 size={20} /> 
+          <span>Editor</span>
+          {activeTab === 'editor' && <div className="absolute top-0 w-12 h-0.5 bg-blue-500 rounded-b-full" />}
+        </button>
+        
+        {/* Center Divider */}
+        <div className="w-px h-8 bg-gray-800"></div>
+
+        <button 
+          onClick={() => setActiveTab('preview')}
+          className={`flex-1 py-4 text-xs font-medium flex flex-col items-center justify-center gap-1 transition-colors relative ${activeTab === 'preview' ? 'text-blue-400' : 'text-gray-500'}`}
+        >
+          <Eye size={20} /> 
+          <span>Preview</span>
+          {activeTab === 'preview' && <div className="absolute top-0 w-12 h-0.5 bg-blue-500 rounded-b-full" />}
+        </button>
       </div>
       
     </div>
