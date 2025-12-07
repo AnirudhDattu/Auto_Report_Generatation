@@ -4,7 +4,7 @@ import { Logo } from './Logo';
 
 export const Letterhead: React.FC = () => {
   return (
-    <div className="w-full grid grid-cols-[auto_1fr] gap-0 border-b-0 pb-4 mb-4 items-start">
+    <div className="w-[calc(100%+5rem)] -ml-10 -mt-10 grid grid-cols-[auto_1fr] gap-0 border-b-0 pb-4 mb-4 items-start pr-10">
       {/* Left side: Logo + Company Name */}
       <div className="flex items-center gap-4">
         <div className="shrink-0">
